@@ -1,0 +1,39 @@
+name: Push Docker Image
+
+on:
+  workflow_run:
+    workflows: ["CI - Build Check"]
+    types:
+      - completed
+
+jobs:
+  push:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Configure AWS
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    - name: Login to ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Build image
+      run: docker build -t buy-wait-api -f "FAST API/Dockerfile" "FAST API"
+
+    - name: Tag image
+      run: |
+        docker tag buy-wait-api:latest \
+        ${{ steps.login-ecr.outputs.registry }}/buy-wait-api:latest
+
+    - name: Push image
+      run: |
+        docker push \
+        ${{ steps.login-ecr.outputs.registry }}/buy-wait-api:latest
