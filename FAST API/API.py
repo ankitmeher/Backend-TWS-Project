@@ -84,6 +84,10 @@ def interpret_confidence(confidence: float | None) -> str:
 def index():
     return {"message": "Buy / Wait Prediction API running ✅"}
 
+@app.get("/health")
+def health():
+    return {"status": "OK"}
+
 @app.post("/predict")
 def predict(req: PredictRequest):
     # 1. Fetch history
