@@ -91,7 +91,7 @@ def interpret_confidence(confidence: float | None) -> str:
 # -------------------- ROUTES --------------------
 @app.get("/")
 def index():
-    return {"message": "Buy / Wait Prediction API running with CI/CD pipeline"}
+    return {"message": "Buy / Wait Prediction API running with CI/CD pipeline added ALB"}
 
 @app.get("/health")
 def health():
