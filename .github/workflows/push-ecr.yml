@@ -12,28 +12,43 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+      - name: Checkout repo
+        uses: actions/checkout@v3
 
-    - name: Configure AWS
-      uses: aws-actions/configure-aws-credentials@v2
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ secrets.AWS_REGION }}
+      # Configure AWS credentials
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-    - name: Login to ECR
-      id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v1
+      # Login to ECR
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
 
-    - name: Build image
-      run: docker build -t buy-wait-api -f "FAST API/Dockerfile" "FAST API"
+      # Enable Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-    - name: Tag image
-      run: |
-        docker tag buy-wait-api:latest \
-        ${{ steps.login-ecr.outputs.registry }}/buy-wait-api:latest
+      # Build image for amd64 (IMPORTANT FIX)
+      - name: Build Docker Image
+        run: |
+          docker buildx build \
+            --platform linux/amd64 \
+            -t buy-wait-api \
+            -f "FAST API/Dockerfile" "FAST API" \
+            --load
 
-    - name: Push image
-      run: |
-        docker push \
-        ${{ steps.login-ecr.outputs.registry }}/buy-wait-api:latest
+      # Tag image
+      - name: Tag image
+        run: |
+          docker tag buy-wait-api:latest \
+          ${{ steps.login-ecr.outputs.registry }}/buy-wait-api:latest
+
+      # Push image
+      - name: Push image to ECR
+        run: |
+          docker push \
+          ${{ steps.login-ecr.outputs.registry }}/buy-wait-api:latest
