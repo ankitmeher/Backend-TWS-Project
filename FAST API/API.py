@@ -3,12 +3,20 @@ from pydantic import BaseModel
 import pandas as pd
 import sqlite3
 import joblib
+import os
+
+import os
+import joblib
+
+BASE_DIR = os.getcwd()
 
 # -------------------- APP --------------------
 app = FastAPI(title="Buy / Wait Prediction API")
 
 # -------------------- LOAD MODEL --------------------
-model = joblib.load("price_history_model.pkl")
+MODEL_PATH = os.path.join(BASE_DIR, "price_history_model.pkl")
+model = joblib.load(MODEL_PATH)
+
 
 # -------------------- REQUEST SCHEMA --------------------
 class PredictRequest(BaseModel):
@@ -16,7 +24,8 @@ class PredictRequest(BaseModel):
     price: float
 
 # -------------------- DATABASE --------------------
-DB_PATH = "price_history.db"
+DB_PATH = os.path.join(BASE_DIR, "price_history.db")
+
 
 def get_price_history(product_name: str) -> pd.DataFrame:
     conn = sqlite3.connect(DB_PATH)
