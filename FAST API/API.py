@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import pandas as pd
 import sqlite3
@@ -12,6 +13,15 @@ BASE_DIR = os.getcwd()
 
 # -------------------- APP --------------------
 app = FastAPI(title="Buy / Wait Prediction API")
+
+# -------------------- CORS CONFIGURATION --------------------
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allow all origins (change to specific domain in production)
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # -------------------- LOAD MODEL --------------------
 MODEL_PATH = os.path.join(BASE_DIR, "price_history_model.pkl")
