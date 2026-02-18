@@ -15,4 +15,4 @@ COPY . .
 EXPOSE 9001
 
 # Run the FastAPI app with uvicorn
-CMD ["uvicorn", "API:app", "--host", "0.0.0.0", "--port", "9001"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "9001"]
