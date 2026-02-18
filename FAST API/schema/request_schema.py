@@ -48,3 +48,12 @@ class HealthResponse(BaseModel):
 class IndexResponse(BaseModel):
     """Schema for index response"""
     message: str
+    Improvements: Optional[list] = None
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "message": "Buy / Wait Prediction API running with CI/CD pipeline added ALB",
+                "Improvements": ["1. Maintain Modularity approach by separating files."]
+            }
+        }
