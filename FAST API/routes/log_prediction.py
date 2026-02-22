@@ -42,7 +42,7 @@ def log_prediction_to_s3(
         s3_client.put_object(
             Bucket=S3_BUCKET,
             Key=s3_key,
-            Body=json.dumps(log_entry),
+            Body=json.dumps(log_entry, default=str),
             ContentType="application/json",
         )
 
