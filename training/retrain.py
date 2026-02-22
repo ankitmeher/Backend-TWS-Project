@@ -10,7 +10,7 @@ from training.config import DATA_PATH, REGISTERED_MODEL_NAME
 from training.train import run_training
 
 # S3 Configuration (Matching FAST API/routes/log_prediction.py)
-S3_BUCKET = "buy-wait-prediction-logs"
+S3_BUCKET = "buy-wait-prediction-log-history"
 S3_PREFIX = "predictions"
 
 

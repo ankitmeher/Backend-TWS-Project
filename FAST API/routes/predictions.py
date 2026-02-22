@@ -1,7 +1,7 @@
 """
 Prediction routes - ML model inference endpoints
 """
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, BackgroundTasks
 import pandas as pd
 import mlflow
 import mlflow.sklearn
@@ -27,7 +27,7 @@ LABEL_MAP = {1: "buy", 0: "wait"}
 
 
 @router.post("/", response_model=PredictionResponse)
-def predict(req: PredictRequest) -> PredictionResponse:
+def predict(req: PredictRequest, background_tasks: BackgroundTasks) -> PredictionResponse:
     """
     Main prediction endpoint.
     
@@ -81,13 +81,15 @@ def predict(req: PredictRequest) -> PredictionResponse:
             confidence = float(proba[class_index])
 
         # 7. Log to S3 (Background/Silent)
-        log_prediction_to_s3(
-            product_name=req.product_name,
-            input_price=req.price,
-            prediction=prediction,
-            confidence=confidence,
-            confidence_level=interpret_confidence(confidence),
-            features=X.to_dict(orient="records")[0] if not X.empty else None
+
+        background_tasks.add_task(
+            log_prediction_to_s3,
+            req.product_name,
+            req.price,
+            prediction,
+            confidence,
+            interpret_confidence(confidence),
+            X.to_dict(orient="records")[0] if not X.empty else None
         )
 
         # 8. Return formatted response
