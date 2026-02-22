@@ -119,8 +119,8 @@ def run_training(promote: bool = True):
             # Log Model + Register
             mlflow.sklearn.log_model(
                 sk_model=best_pipeline,
-                artifact_path="model",
-                registered_model_name=REGISTERED_MODEL_NAME
+                name=model_name,
+                registered_model_name=REGISTERED_MODEL_NAME,
             )
 
             print(f"{model_name} Test Accuracy: {test_acc:.4f} | Macro F1: {f1_macro:.4f}")
