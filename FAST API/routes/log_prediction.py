@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from botocore.exceptions import BotoCoreError, ClientError
 
 # S3 Configuration
-S3_BUCKET = "buy-wait-prediction-logs"
+S3_BUCKET = "buy-wait-prediction-log-history"
 S3_PREFIX = "predictions"  # logs stored under s3://buy-wait-prediction-logs/predictions/
 
 # Initialize S3 client (uses EC2 IAM role automatically when deployed)
