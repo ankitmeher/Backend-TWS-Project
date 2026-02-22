@@ -10,8 +10,8 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # OLD: MODEL_PATH = os.path.join(BASE_DIR, "models", "price_history_model.pkl")
 MODEL_VERSION = "3.0"  # Now served via MLflow Model Registry
 
-# MLflow Model Registry (local)
-MLFLOW_TRACKING_URI = "http://localhost:5000"
+# MLflow Model Registry (uses environment variable if set, e.g. in Docker/ECS)
+MLFLOW_TRACKING_URI = os.getenv("MLFLOW_URI", "http://13.234.184.77:5000")
 MLFLOW_MODEL_URI = "models:/buy_wait_model@champion"
 # For EC2 Production, replace MLFLOW_TRACKING_URI with: http://13.234.184.77:5000
 
