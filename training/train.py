@@ -119,7 +119,7 @@ def run_training(promote: bool = True):
             # Log Model + Register
             mlflow.sklearn.log_model(
                 sk_model=best_pipeline,
-                name=model_name,
+                artifact_path=model_name,
                 registered_model_name=REGISTERED_MODEL_NAME,
             )
 
