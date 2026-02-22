@@ -1,0 +1,40 @@
+name: Push Training Image
+
+on:
+  workflow_run:
+    workflows: ["Training Pipeline"]
+    types:
+      - completed
+
+jobs:
+  push-training:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and Push Training Image
+        run: |
+          docker buildx build \
+            --platform linux/amd64 \
+            -t buy-wait-retrain \
+            -f training/DockerFile training/ \
+            --load
+          
+          docker tag buy-wait-retrain:latest ${{ steps.login-ecr.outputs.registry }}/buy-wait-retrain:latest
+          docker push ${{ steps.login-ecr.outputs.registry }}/buy-wait-retrain:latest

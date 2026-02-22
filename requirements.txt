@@ -1,0 +1,15 @@
+# FastAPI Inference
+fastapi==0.116.2
+uvicorn==0.36.0
+python-multipart==0.0.22
+pydantic==2.11.9
+
+# ML Training & Experiments
+mlflow==3.8.1
+scikit-learn==1.7.2
+pandas==2.2.1
+numpy==1.26.4
+xgboost==3.1.3
+matplotlib==3.10.3
+seaborn==0.13.2
+boto3

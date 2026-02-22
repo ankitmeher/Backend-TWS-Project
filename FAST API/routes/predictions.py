@@ -3,23 +3,27 @@ Prediction routes - ML model inference endpoints
 """
 from fastapi import APIRouter, HTTPException
 import pandas as pd
-import joblib
+import mlflow
+import mlflow.sklearn
 
 from schema.request_schema import PredictRequest, PredictionResponse
-from config import MODEL_PATH
+from config import MLFLOW_TRACKING_URI, MLFLOW_MODEL_URI
 from database_utils.db_operations import get_price_history
 from features.feature_engineering import build_features
 from utils.confidence import interpret_confidence
+from routes.log_prediction import log_prediction_to_s3
 
 router = APIRouter(prefix="/predict", tags=["Predictions"])
 
-# Load model
+# Load champion model from MLflow Model Registry
 try:
-    model = joblib.load(MODEL_PATH)
-except FileNotFoundError:
-    raise RuntimeError(f"Model not found at {MODEL_PATH}. Please ensure the model file exists.")
+    mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+    model = mlflow.sklearn.load_model(MLFLOW_MODEL_URI)
 except Exception as e:
-    raise RuntimeError(f"Error loading model: {e}")
+    raise RuntimeError(f"Error loading MLflow model ({MLFLOW_MODEL_URI}): {e}")
+
+# Map model output (0/1) back to human-readable labels
+LABEL_MAP = {1: "buy", 0: "wait"}
 
 
 @router.post("/", response_model=PredictionResponse)
@@ -66,16 +70,27 @@ def predict(req: PredictRequest) -> PredictionResponse:
         X = feat_df.iloc[-1:]
 
         # 5. Make prediction
-        prediction = model.predict(X)[0]
+        raw_pred = model.predict(X)[0]
+        prediction = LABEL_MAP.get(int(raw_pred), str(raw_pred))
 
         # 6. Get probability/confidence if model supports it
         confidence = None
         if hasattr(model, "predict_proba"):
             proba = model.predict_proba(X)[0]
-            class_index = list(model.classes_).index(prediction)
+            class_index = list(model.classes_).index(raw_pred)
             confidence = float(proba[class_index])
 
-        # 7. Return formatted response
+        # 7. Log to S3 (Background/Silent)
+        log_prediction_to_s3(
+            product_name=req.product_name,
+            input_price=req.price,
+            prediction=prediction,
+            confidence=confidence,
+            confidence_level=interpret_confidence(confidence),
+            features=X.to_dict(orient="records")[0] if not X.empty else None
+        )
+
+        # 8. Return formatted response
         return {
             "product_name": req.product_name,
             "input_price": req.price,

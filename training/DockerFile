@@ -1,0 +1,36 @@
+# =====================================================
+# Training Container - Buy/Wait Model
+# =====================================================
+# Build from 'training/' directory:
+#   docker build -t tws-training .
+#
+# Run against EC2 MLflow server:
+#   docker run --rm \
+#     -e MLFLOW_URI=http://13.234.184.77:5000 \
+#     tws-training
+# =====================================================
+
+FROM python:3.11-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install dependencies first (cached layer)
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy all files from the training folder into /app/training
+# Note: When building with 'training/' as context, '.' is the contents of training/
+COPY . ./training/
+
+# Ensure the training directory is in the python path
+ENV PYTHONPATH=/app
+
+# Default MLflow URI (override at runtime with -e MLFLOW_URI=...)
+ENV MLFLOW_URI=http://host.docker.internal:5000
+
+ENV PYTHONUNBUFFERED=1
+
+# Default command is retraining
+# Pass -m training.train at runtime if manual full train is needed
+CMD ["python", "-m", "training.retrain"]

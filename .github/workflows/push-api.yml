@@ -1,21 +1,19 @@
-name: Push Docker Image
+name: Push API Image
 
 on:
   workflow_run:
-    workflows: ["CI - Build Check"]
+    workflows: ["Push Training Image"]
     types:
       - completed
 
 jobs:
-  push:
+  push-api:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      # Configure AWS credentials
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -23,32 +21,20 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      # Login to ECR
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      # Enable Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Build image for amd64 (IMPORTANT FIX)
-      - name: Build Docker Image
+      - name: Build and Push API Image
         run: |
           docker buildx build \
             --platform linux/amd64 \
             -t buy-wait-api \
             -f "FAST API/Dockerfile" "FAST API" \
             --load
-
-      # Tag image
-      - name: Tag image
-        run: |
-          docker tag buy-wait-api:latest \
-          ${{ steps.login-ecr.outputs.registry }}/buy-wait-api:latest
-
-      # Push image
-      - name: Push image to ECR
-        run: |
-          docker push \
-          ${{ steps.login-ecr.outputs.registry }}/buy-wait-api:latest
+          
+          docker tag buy-wait-api:latest ${{ steps.login-ecr.outputs.registry }}/buy-wait-api:latest
+          docker push ${{ steps.login-ecr.outputs.registry }}/buy-wait-api:latest
