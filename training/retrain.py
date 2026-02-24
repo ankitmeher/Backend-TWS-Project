@@ -158,7 +158,7 @@ def retrain_and_promote():
         promote_model_to_champion(new_run_id)
         
         # 6. Force Redeployment
-        force_ecs_redeployment()
+        # force_ecs_redeployment() # Commented for manual testing   
     else:
         print(f"New model (F1: {new_f1:.4f}) did not outperform champion (F1: {old_f1:.4f}).")
 
