@@ -1,74 +1,142 @@
-# Buy Wait TWS Project (Backend)
+# 🛒 Buy/Wait Prediction System: End-to-End MLOps Solution
 
-This repository contains the **Buy Wait TWS Project** backend, built using FastAPI. The service provides prediction endpoints consumed by a frontend (not included here).
+[![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
+[![MLflow](https://img.shields.io/badge/MLflow-0194E2?style=for-the-badge&logo=mlflow&logoColor=white)](https://mlflow.org/)
+[![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
+[![AWS](https://img.shields.io/badge/AWS-232F3E?style=for-the-badge&logo=amazon-aws&logoColor=white)](https://aws.amazon.com/)
+[![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+
+An intelligent price-prediction engine that determines whether users should **Buy Now** or **Wait** for a price drop. This project isn't just a model; it's a complete **Production-Ready MLOps Pipeline** featuring automated retraining, experiment tracking, and robust model serving.
 
 ---
 
-## Project Structure
+## 🏗️ System Architecture
 
-```
-Backend - TWS Project/
-    FAST API/
-        API.py
-        Dockerfile
-        requirements.txt
-        __pycache__/
+The following diagram illustrates the closed-loop MLOps architecture, highlighting the flow from user interaction to automated model promotion.
+
+```mermaid
+graph TD
+    User([User]) --> Frontend[React Frontend]
+    Frontend --> API[FastAPI Predictor]
+    
+    subgraph "Model Serving & Monitoring"
+        API --> ModelManager[Model Manager & Watcher]
+        ModelManager -- "Loads @champion" --> Registry[(MLflow Model Registry)]
+        API -- "Logs Predictions" --> S3_Logs[(AWS S3: Prediction Logs)]
+    end
+    
+    subgraph "Automated Retraining (Daily)"
+        S3_Logs --> Retrain[Retraining Script]
+        Retrain -- "Fetches History" --> TrainData[(Training Dataset)]
+        Retrain -- "Triggers" --> TrainLoop[Training Loop: scikit-learn]
+        TrainLoop -- "Logs Metrics/Artifacts" --> MLflow[MLflow Tracking Server]
+        TrainLoop -- "Registers Version" --> Registry
+        Registry -- "Conditional Promotion" --> Champion[Champion Model Update]
+    end
+    
+    MLflow --> SQLite[(Metadata DB)]
 ```
 
-## Getting Started
+---
+
+## 🌟 Key Features
+
+*   **Closed-Loop MLOps**: Automated retraining cycle that fetches production prediction logs from S3, merges them with historical data, and re-optimizes the model.
+*   **Champion Model Registry**: Uses MLflow's "Champion" alias pattern to decouple model updates from code deployments. The API automatically hot-reloads when a new model is promoted.
+*   **Time-Series Optimized**: Implements `TimeSeriesSplit` and custom feature engineering (rolling averages, volatility, price trends) to handle sequential data correctly.
+*   **High Availability**: Model manager with background polling and thread-safe loading. Includes robust fallback patterns to serve the latest stable version if registry synchronization fails.
+*   **Cloud-Native Deployment**: Fully Dockerized components with GitHub Actions CI/CD for AWS ECS (Fargate) deployment.
+
+---
+
+## 🛠️ Tech Stack
+
+### Backend & AI
+- **Python (FastAPI)**: High-performance asynchronous API for real-time inference.
+- **scikit-learn**: Model development using Random Forest and Gradient Boosting.
+- **Pandas/NumPy**: Feature engineering and data manipulation.
+- **Joblib**: Efficient model serialization.
+
+### MLOps & Data
+- **MLflow**: Centralized experiment tracking, model versioning, and lifecycle management.
+- **AWS S3**: Scalable storage for prediction log history and model artifacts.
+- **SQLite**: Local metadata store for MLflow tracking.
+
+### Frontend
+- **React (Vite)**: Modern, responsive UI for real-time price tracking and prediction visualization.
+
+### DevOps
+- **Docker**: Containerization for environment parity.
+- **GitHub Actions**: Automated CI/CD pipelines for testing, building, and deployment.
+- **AWS ECS (Fargate)**: Serverless container orchestration.
+
+---
+
+## 🚀 MLOps Workflow
+
+### 1. Training & Tracking
+The training pipeline (`train.py`) performs an exhaustive search over multiple models using `GridSearchCV`. Every run is logged to MLflow with:
+- **Parameters**: Hyperparameter settings.
+- **Metrics**: Accuracy, Recall, Macro F1-Score.
+- **Artifacts**: Classification reports, confusion matrices, and the serialized model.
+
+### 2. Automated Retraining
+Every day, an EventBridge trigger executes the retraining pipeline:
+1.  **Ingestion**: Scrapes prediction logs from S3.
+2.  **Processing**: Cleans and engineers features from new production data.
+3.  **Validation**: Compares the new model's Macro F1 against the current `Champion`.
+4.  **Promotion**: If the new model improves by >1%, it is automatically tagged as the new `Champion`.
+
+### 3. Seamless Model Serving
+The FastAPI service runs a **Model Watcher** (background thread). It polls MLflow for the `Champion` alias. When a change is detected, it loads the new artifacts and refreshes the inference engine without a server restart.
+
+---
+
+## 📦 Installation & Setup
 
 ### Prerequisites
+- Python 3.11+
+- Docker & Docker Compose
+- AWS CLI configured
 
-- Python 3.10+
-- Docker (optional, for containerization)
-
-### Backend Setup
-
-1. Navigate to the backend folder:
+### Local Development
+1. **Clone the repository**:
    ```bash
-   cd "Backend - TWS Project/FAST API"
+   git clone https://github.com/your-username/buy-wait-tws-project.git
+   cd buy-wait-tws-project/Backend\ -\ TWS\ Project
    ```
-2. Create and activate a virtual environment (recommended):
+
+2. **Setup virtual environment**:
    ```bash
    python -m venv venv
-   # Windows PowerShell
-   .\venv\Scripts\Activate.ps1
-   ```
-3. Install dependencies:
-   ```bash
+   source venv/bin/activate  # Or `.\venv\Scripts\Activate.ps1` on Windows
    pip install -r requirements.txt
    ```
-4. Run the API:
+
+3. **Run MLflow Server**:
    ```bash
-   uvicorn API:app --reload
+   mlflow server --backend-store-uri sqlite:///mlflow.db --default-artifact-root ./mlruns --host 0.0.0.0 --port 5000
    ```
-5. The API should be available at `http://127.0.0.1:8000`.
 
-#### Docker (optional)
+4. **Start the API**:
+   ```bash
+   cd "FAST API"
+   uvicorn main:app --host 0.0.0.0 --port 9001 --reload
+   ```
 
-Build and run the container:
-```bash
-cd "Backend - TWS Project/FAST API"
-docker build -t buywait-backend .
-docker run -p 8000:8000 buywait-backend
-```
+---
 
-### API Interaction
+## 🔌 API Documentation
 
-The backend exposes endpoints under `/` that return prediction results. Document these endpoints in `API.py` or in an OpenAPI spec if desired.
+Once started, the interactive Swagger UI is available at `/docs`.
 
-## Testing
+### POST `/predict/`
+Primary inference endpoint.
+*   **Request**: `{"product_name": "Product X", "price": 299.99}`
+*   **Logic**: Fetches last 3+ days of history, executes feature engineering, runs champion model.
+*   **Response**: Returns recommendation (`buy`/`wait`), confidence score, and interpreted level.
 
-*There are currently no automated tests configured.*
+---
 
-## Deployment
-
-Describe any deployment steps here (e.g., deploying backend to a cloud service).
-
-## Contributing
-
-Feel free to submit pull requests or open issues. Follow the existing code style and include tests when available.
-
-## License
-
-Specify the license under which this project is distributed.
+## 👨‍💻 Author
+**Ankit Meher** - [LinkedIn](https://www.linkedin.com/in/ankit-meher/) | [GitHub](https://github.com/Meher-Ankit)
