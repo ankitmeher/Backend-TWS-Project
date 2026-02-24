@@ -10,7 +10,7 @@ import os
 
 
 # MLFLOW_URI = os.getenv("MLFLOW_URI", "http://13.234.184.77:5000")
-MLFLOW_URI = os.getenv("MLFLOW_URI", "http://localhost:5000")
+MLFLOW_URI = os.getenv("MLFLOW_URI", "http://13.234.184.77:5000")
 
 # http://13.234.184.77:5000/ (PRODUCTION) http://localhost:5000
 
