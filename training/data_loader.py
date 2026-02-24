@@ -13,11 +13,13 @@ def load_data(path=DATA_PATH):
     
     # Basic date processing as requested
     if "date" in df.columns:
-        df["date"] = pd.to_datetime(df["date"])
+        # Use format='mixed' to handle dates both with and without microseconds
+        df["date"] = pd.to_datetime(df["date"], format='mixed')
         df = df.sort_values("date").reset_index(drop=True)
 
     # Split into features and target
-    drop_cols = ["date", "product_name", TARGET]
+    # Ignore 'id' if it's present in the CSV
+    drop_cols = ["id", "date", "product_name", TARGET]
     X = df.drop(columns=[c for c in drop_cols if c in df.columns])
     y = df[TARGET]
 

@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from config import MODEL_VERSION, API_TITLE
+from services.model_manager import start_model_watcher, load_model
 from routes import index, health, predictions
 
 
@@ -26,6 +27,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.on_event("startup")
+def startup_event():
+    print("[APP] Starting model watcher...")
+    load_model()              # initial load
+    start_model_watcher(interval_seconds=60)     # background refresh
 
 # ================== INCLUDE ROUTES ==================
 app.include_router(index.router)

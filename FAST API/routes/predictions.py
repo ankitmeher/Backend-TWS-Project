@@ -25,6 +25,8 @@ from features.feature_engineering import build_features
 from utils.confidence import interpret_confidence
 from routes.log_prediction import log_prediction_to_s3
 
+from services.model_manager import get_model
+
 
 # --------------------------------------------------
 # Router setup
@@ -35,12 +37,6 @@ router = APIRouter(prefix="/predict", tags=["Predictions"])
 # --------------------------------------------------
 # Load Production Model (once at startup)
 # --------------------------------------------------
-try:
-    mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
-    model = mlflow.sklearn.load_model(MLFLOW_MODEL_URI)
-    print("[Model] Loaded successfully from MLflow")
-except Exception as e:
-    raise RuntimeError(f"Failed to load MLflow model: {e}")
 
 
 # Model output mapping
@@ -92,6 +88,14 @@ def predict(req: PredictRequest, background_tasks: BackgroundTasks):
         # ==================================================
         # 4️⃣ Model Prediction
         # ==================================================
+        model = get_model()
+
+        if model is None:
+            raise HTTPException(
+                status_code=503,
+                detail="Model not loaded yet. Try again shortly."
+            )
+
         raw_prediction = model.predict(X)[0]
         prediction_label = LABEL_MAP.get(int(raw_prediction), str(raw_prediction))
 

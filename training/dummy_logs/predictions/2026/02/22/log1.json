@@ -1,0 +1,33 @@
+{
+    "id": "07d36067-ee0e-44db-9848-722e319bd72f",
+    "timestamp": "2026-02-22T22:54:30.105773+00:00",
+    "product_name": "Boat Nirvana Crystl Transparent Case Spatial Audio",
+    "input_price": 1200.0,
+    "prediction": "buy",
+    "confidence": 0.7949305245777301,
+    "confidence_level": "high",
+    "features": {
+        "date": "2026-02-22 22:54:30.061254",
+        "product_name": "Boat Nirvana Crystl Transparent Case Spatial Audio",
+        "brand": "boat",
+        "price": 1200.0,
+        "has_anc": 1,
+        "anc_level_db": 32.0,
+        "has_enc": 0,
+        "driver_size_mm": 12.4,
+        "day": 22,
+        "month": 2,
+        "dayofweek": 6,
+        "hour": 22,
+        "price_lag_1": 2199.0,
+        "price_lag_2": 2399.0,
+        "price_diff_1": -999.0,
+        "price_pct_change_1": -0.4542974079126876,
+        "rolling_mean_3": 1932.6666666666667,
+        "rolling_min_3": 1200.0,
+        "rolling_max_3": 2399.0,
+        "rolling_std_3": 642.3397335782159,
+        "price_vs_roll_mean": -732.6666666666667,
+        "price_vs_roll_min": 0.0
+    }
+}
