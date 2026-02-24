@@ -153,7 +153,7 @@ def retrain_and_promote():
     new_run_id = results["run_id"]
 
     # 5. Conditional Promotion and Redeployment
-    if new_f1 >= old_f1:
+    if new_f1 >= old_f1+0.01:
         print(f"Promoting new model (F1: {new_f1:.4f}) to CHAMPION...")
         promote_model_to_champion(new_run_id)
         
